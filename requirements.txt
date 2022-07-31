@@ -3,6 +3,8 @@ aiohttp
 aioredis==2.0.1
 Brotli
 cchardet
+bcrypt
+python-multipart
 databases[asyncmy]
 fastapi
 orjson

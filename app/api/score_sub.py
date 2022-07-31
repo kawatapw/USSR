@@ -95,20 +95,16 @@ def chart_entry(name: str, before: Optional[T], after: T) -> str:
 
 async def submit_score(
     request: Request,
-    token: Optional[str] = Header(None),
     user_agent: str = Header(...),
-    exited_out: bool = Form(..., alias="x"),
-    fail_time: int = Form(..., alias="ft"),
+    exited_out: bool = Form(False, alias="x"),
+    fail_time: int = Form(0, alias="ft"),
     visual_settings_b64: bytes = Form(..., alias="fs"),
-    updated_beatmap_hash: str = Form(..., alias="bmk"),
-    storyboard_md5: Optional[str] = Form(None, alias="sbk"),
     iv_b64: bytes = Form(..., alias="iv"),
     unique_ids: str = Form(..., alias="c1"),
-    score_time: int = Form(..., alias="st"),
+    score_time: int = Form(0, alias="st"),
     password_md5: str = Form(..., alias="pass"),
     osu_version: str = Form(..., alias="osuver"),
     client_hash_b64: bytes = Form(..., alias="s"),
-    fl_cheat_screenshot: Optional[bytes] = File(None, alias="i"),
 ):
     start = time.perf_counter_ns()
 
@@ -132,6 +128,8 @@ async def submit_score(
     if not (beatmap := await app.usecases.beatmap.fetch_by_md5(beatmap_md5)):
         return b"error: beatmap"
 
+    score_time = beatmap.hit_length
+
     score = Score.from_submission(score_data[2:], beatmap_md5, user)
     leaderboard = await app.usecases.leaderboards.fetch(beatmap, score.mode)
 
@@ -142,15 +140,6 @@ async def submit_score(
 
     if not score.mods.rankable:
         return b"error: no"
-
-    if not token and not config.custom_clients:
-        await app.usecases.user.restrict_user(
-            user,
-            "Tampering with osu!auth.",
-            "The client has not sent an anticheat token to the server, meaning "
-            "that they either have disabled the anticheat, or are using a custom/older "
-            "client. (score submit gate)",
-        )
 
     if user_agent != "osu!":
         await app.usecases.user.restrict_user(
@@ -230,7 +219,7 @@ async def submit_score(
             {"md5": beatmap.md5, "id": user.id, "mode": score.mode.as_vn, "is_relax": score.mode.scores_is_relax},
         )
 
-    score.id = await app.state.services.database.execute(    
+    score.id = (await app.state.services.database.execute(    
         (
             f"INSERT INTO {score.mode.scores_table} (beatmap_md5, userid, score, max_combo, full_combo, mods, 300_count, 100_count, 50_count, katus_count, "
             "gekis_count, misses_count, time, play_mode, completed, accuracy, pp, playtime, is_relax) VALUES "
@@ -238,7 +227,7 @@ async def submit_score(
             ":gekis_count, :misses_count, :time, :play_mode, :completed, :accuracy, :pp, :playtime, :is_relax)"
         ),
         score.db_dict,
-    ),
+    ))
 
     if score.passed:
         replay_data = await replay_file.read()
