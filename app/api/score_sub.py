@@ -306,21 +306,21 @@ async def submit_score(
             score.pp if score.mode > Mode.MANIA else score.score,
         )
 
-    if (
-        score.rank == 1
-        and score.status == ScoreStatus.BEST
-        and beatmap.has_leaderboard
-        and not user.privileges.is_restricted
-    ):
-        asyncio.create_task(
-            app.usecases.score.handle_first_place(
-                score,
-                beatmap,
-                user,
-                old_stats,
-                stats,
-            ),
-        )
+    # if (
+    #     score.rank == 1
+    #     and score.status == ScoreStatus.BEST
+    #     and beatmap.has_leaderboard
+    #     and not user.privileges.is_restricted
+    # ):
+    #     asyncio.create_task(
+    #         app.usecases.score.handle_first_place(
+    #             score,
+    #             beatmap,
+    #             user,
+    #             old_stats,
+    #             stats,
+    #         ),
+    #     )
 
     asyncio.create_task(app.utils.notify_new_score(score.id))
 
