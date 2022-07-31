@@ -57,13 +57,17 @@ class Mode(IntEnum):
 
     @cached_property
     def scores_table(self) -> str:
+        return "scores"
+
+    @cached_property
+    def scores_is_relax(self) -> str:
         if self.relax:
-            return "scores_relax"
+            return 1
 
         if self.autopilot:
-            return "scores_ap"
+            return 1
 
-        return "scores"
+        return 0
 
     @cached_property
     def pp_cap(self) -> int:
@@ -78,10 +82,10 @@ class Mode(IntEnum):
     @cached_property
     def stats_table(self) -> str:
         if self.relax:
-            return "rx_stats"
+            return "users_stats_relax"
 
         if self.autopilot:
-            return "ap_stats"
+            return "users_stats_relax"
 
         return "users_stats"
 

@@ -11,10 +11,11 @@ async def create(beatmap: Beatmap, mode: Mode) -> Leaderboard:
     leaderboard = Leaderboard(mode)
 
     db_scores = await app.state.services.database.fetch_all(
-        f"SELECT * FROM {mode.scores_table} WHERE beatmap_md5 = :md5 AND play_mode = :mode AND completed = 3",
+        f"SELECT * FROM {mode.scores_table} WHERE beatmap_md5 = :md5 AND play_mode = :mode AND completed = 3 AND is_relax = :is_relax",
         {
             "md5": beatmap.md5,
             "mode": mode.as_vn,
+            "is_relax": mode.scores_is_relax,
         },
     )
 

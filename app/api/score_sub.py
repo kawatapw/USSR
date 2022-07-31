@@ -197,7 +197,7 @@ async def submit_score(
     if await app.state.services.database.fetch_val(
         (
             f"SELECT 1 FROM {score.mode.scores_table} WHERE userid = :id AND beatmap_md5 = :md5 AND score = :score "
-            "AND play_mode = :mode AND mods = :mods"
+            "AND play_mode = :mode AND mods = :mods AND is_relax = :is_relax"
         ),
         {
             "id": user.id,
@@ -205,6 +205,7 @@ async def submit_score(
             "score": score.score,
             "mode": score.mode.as_vn,
             "mods": score.mods.value,
+            "is_relax": score.mode.scores_is_relax,
         },
     ):
         # duplicate score detected
@@ -225,19 +226,19 @@ async def submit_score(
 
     if score.status == ScoreStatus.BEST:
         await app.state.services.database.execute(
-            f"UPDATE {score.mode.scores_table} SET completed = 2 WHERE completed = 3 AND beatmap_md5 = :md5 AND userid = :id AND play_mode = :mode",
-            {"md5": beatmap.md5, "id": user.id, "mode": score.mode.as_vn},
+            f"UPDATE {score.mode.scores_table} SET completed = 2 WHERE completed = 3 AND beatmap_md5 = :md5 AND userid = :id AND play_mode = :mode AND is_relax = :is_relax",
+            {"md5": beatmap.md5, "id": user.id, "mode": score.mode.as_vn, "is_relax": score.mode.scores_is_relax},
         )
 
-    score.id = await app.state.services.database.execute(
+    score.id = await app.state.services.database.execute(    
         (
             f"INSERT INTO {score.mode.scores_table} (beatmap_md5, userid, score, max_combo, full_combo, mods, 300_count, 100_count, 50_count, katus_count, "
-            "gekis_count, misses_count, time, play_mode, completed, accuracy, pp, playtime) VALUES "
+            "gekis_count, misses_count, time, play_mode, completed, accuracy, pp, playtime, is_relax) VALUES "
             "(:beatmap_md5, :userid, :score, :max_combo, :full_combo, :mods, :300_count, :100_count, :50_count, :katus_count, "
-            ":gekis_count, :misses_count, :time, :play_mode, :completed, :accuracy, :pp, :playtime)"
+            ":gekis_count, :misses_count, :time, :play_mode, :completed, :accuracy, :pp, :playtime, :is_relax)"
         ),
         score.db_dict,
-    )
+    ),
 
     if score.passed:
         replay_data = await replay_file.read()

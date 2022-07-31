@@ -100,8 +100,8 @@ async def full_recalc(stats: Stats, score_pp: Optional[int] = None) -> None:
 
     db_scores = await app.state.services.database.fetch_all(
         f"SELECT s.accuracy, s.pp FROM {stats.mode.scores_table} s RIGHT JOIN beatmaps b USING(beatmap_md5) "
-        "WHERE s.completed = 3 AND s.play_mode = :mode AND b.ranked IN (3, 2) AND s.userid = :id ORDER BY s.pp DESC LIMIT 100",
-        {"mode": stats.mode.as_vn, "id": stats.user_id},
+        "WHERE s.completed = 3 AND s.play_mode = :mode AND b.ranked IN (3, 2) AND s.userid = :id AND s.is_relax = :is_relax ORDER BY s.pp DESC LIMIT 100",
+        {"mode": stats.mode.as_vn, "id": stats.user_id, "is_relax": stats.mode.scores_is_relax},
     )
 
     total_acc = 0.0
@@ -125,11 +125,12 @@ async def calc_bonus(stats: Stats) -> float:
     count = await app.state.services.database.fetch_val(
         (
             f"SELECT COUNT(*) FROM {stats.mode.scores_table} s RIGHT JOIN beatmaps b USING(beatmap_md5) "
-            "WHERE b.ranked IN (2, 3) AND s.completed = 3 AND s.play_mode = :mode AND s.userid = :id LIMIT 25397"
+            "WHERE b.ranked IN (2, 3) AND s.completed = 3 AND s.play_mode = :mode AND s.userid = :id AND s.is_relax = :is_relax LIMIT 25397"
         ),
         {
             "mode": stats.mode.as_vn,
             "id": stats.user_id,
+            "is_relax": stats.mode.scores_is_relax,
         },
     )
 

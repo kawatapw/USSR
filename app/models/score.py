@@ -78,6 +78,7 @@ class Score:
             "accuracy": self.acc,
             "pp": self.pp,
             "playtime": self.time_elapsed,
+            "is_relax": self.mode.scores_is_relax,
         }
 
     @classmethod
