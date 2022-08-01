@@ -6,7 +6,7 @@ import databases
 
 from config import config
 
-redisurl = "redis://{password}@{host}/{db}".format(
+redisurl = "redis://:{password}@{host}/{db}".format(
       password=config.redis_pass,
       host=config.redis_host,
       db=config.redis_db
