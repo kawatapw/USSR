@@ -146,18 +146,7 @@ async def get_leaderboard(
         # this double loop probably seems pointless
         # however it's necessary to be able to limit score count and get accurate ranking at the same time
         for idx, score in enumerate(scores):
-            if score.user_id == user.id:
-                displayed_name = user.name
-            else:
-                score_clan = await app.usecases.clans.get_clan(score.user_id)
-                score_username = await app.usecases.usernames.get_username(
-                    score.user_id,
-                )
-
-                if score_clan:
-                    displayed_name = f"[{score_clan}] {score_username}"
-                else:
-                    displayed_name = score_username
+            displayed_name = user.name
 
             response_lines.append(score.osu_string(displayed_name, rank=idx + 1))
 
