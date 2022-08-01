@@ -140,19 +140,19 @@ async def remove_from_leaderboard(user: User) -> None:
 
     for mode in ("std", "taiko", "ctb", "mania"):
         await app.state.services.redis.zrem(f"ripple:leaderboard:{mode}", uid)
-        await app.state.services.redis.zrem(f"ripple:leaderboard_relax:{mode}", uid)
-        await app.state.services.redis.zrem(f"ripple:leaderboard_ap:{mode}", uid)
+        await app.state.services.redis.zrem(f"ripple:leaderboard:{mode}:relax", uid)
+        await app.state.services.redis.zrem(f"ripple:leaderboard:{mode}:ap", uid)
 
         if user.country and (c := user.country.lower()) != "xx":
             await app.state.services.redis.zrem(f"ripple:leaderboard:{mode}:{c}", uid)
 
             await app.state.services.redis.zrem(
-                f"ripple:leaderboard_relax:{mode}:{c}",
+                f"ripple:leaderboard:{mode}:{c}:relax",
                 uid,
             )
 
             await app.state.services.redis.zrem(
-                f"ripple:leaderboard_ap:{mode}:{c}",
+                f"ripple:leaderboard_ap:{mode}:{c}:ap",
                 uid,
             )
 
