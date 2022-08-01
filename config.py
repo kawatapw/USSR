@@ -15,6 +15,9 @@ class Config:
     sql_user: str = "root"
     sql_db: str = "rosu"
     sql_pass: str = "password"
+    redis_host: str = "localhost"
+    redis_db: str = "0"
+    redis_pass: str = ""
     data_dir: str = ".data"
     direct_url: str = "https://catboy.best/api"
     api_keys_pool: list[str] = field(default_factory=list)

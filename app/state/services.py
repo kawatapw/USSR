@@ -6,7 +6,13 @@ import databases
 
 from config import config
 
-redis: aioredis.Redis = aioredis.from_url("redis://localhost")
+redisurl = "redis://{password}@{host}/{db}".format(
+      password=config.redis_pass,
+      host=config.redis_host,
+      db=config.redis_db
+    )
+
+redis: aioredis.Redis = aioredis.from_url(redisurl)
 
 url = databases.DatabaseURL(
     "mysql+asyncmy://{username}:{password}@{host}:3306/{db}".format(
