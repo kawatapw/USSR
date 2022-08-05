@@ -63,6 +63,12 @@ async def remove_from_leaderboards(payload: str) -> None:
         args
     )
 
+    for user_stats in app.usecases.stats.STATS:
+        if user_stats["user_id"] != user_id:
+            continue
+
+        del app.usecases.stats.STATS[user_stats]
+
     for map in user_scores:
         beatmap = app.usecases.beatmap.md5_from_cache(map["beatmap_md5"])
         
