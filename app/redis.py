@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import traceback
 import asyncio
 from typing import Awaitable
 from typing import Callable
@@ -48,28 +49,31 @@ async def handle_username_change(payload: str) -> None:
 
 @register_pubsub("ussr:wipe_user")
 async def remove_from_leaderboards(payload: str) -> None:
-    data: RemoveFromLeaderboard = orjson.loads(payload)
-    user_id = int(data["userID"])
-    isRelax = data["isRelax"]
+    try:
+        data: RemoveFromLeaderboard = orjson.loads(payload)
+        user_id = int(data["userID"])
+        isRelax = int(data["isRelax"])
 
-    base_query = ["SELECT DISTINCT(beatmap_md5) FROM scores WHERE completed > 1 AND userid = :user_id"]
-    args = {"user_id": user_id}
+        base_query = ["SELECT DISTINCT(beatmap_md5) FROM scores WHERE completed > 1 AND userid = :user_id"]
+        args = {"user_id": user_id}
 
-    if isRelax != 2:
-        base_query.append("AND is_relax = :is_relax")
-        args["is_relax"] = isRelax
+        if isRelax != 2:
+            base_query.append("AND is_relax = :is_relax")
+            args["is_relax"] = isRelax
 
-    user_scores = await app.state.services.database.fetch_all(
-        " ".join(base_query),
-        args
-    )
+        user_scores = await app.state.services.database.fetch_all(
+            " ".join(base_query),
+            args
+        )
 
-    app.usecases.stats.remove_user(user_id)
+        app.usecases.stats.remove_user(user_id)
 
-    for map in user_scores:
-        app.usecases.beatmap.remove_leaderboard(map["beatmap_md5"])
+        for map in user_scores:
+            app.usecases.beatmap.remove_leaderboard(map["beatmap_md5"])
 
-    logger.info(f"Removed user ID {user_id} from cached leaderboards!")
+        logger.info(f"Removed user ID {user_id} from cached leaderboards!")
+    except Exception:
+        logger.error(traceback.format_exc())
 
 
 @register_pubsub("ussr:refresh_bmap")
