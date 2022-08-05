@@ -17,9 +17,6 @@ from app.models.score import Score
 from app.models.user import User
 from app.usecases.user import authenticate_user
 
-CUR_LB_VER = 4
-
-
 async def get_leaderboard(
     user: User = Depends(authenticate_user(Query, "us", "ha")),
     requesting_from_editor_song_select: bool = Query(..., alias="s"),
@@ -42,14 +39,6 @@ async def get_leaderboard(
 
     mode = Mode.from_lb(mode_arg, mods_arg)
     mods = Mods(mods_arg)
-
-    if leaderboard_version != CUR_LB_VER:
-        await app.usecases.user.restrict_user(
-            user,
-            "Bypassing client version protections.",
-            "The leaderboard version for the current known latest osu! client is "
-            f"{CUR_LB_VER}, but the client sent {leaderboard_version}. (leaderboard gate)",
-        )
 
     has_set_id = map_set_id > 0
     if has_set_id:
