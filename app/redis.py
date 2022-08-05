@@ -34,6 +34,9 @@ async def handle_privilege_change(payload: str) -> None:
 class UsernameChange(TypedDict):
     userID: str
 
+class RemoveFromLeaderboard(TypedDict):
+    userID: int
+    isRelax: int
 
 @register_pubsub("peppy:change_username")
 async def handle_username_change(payload: str) -> None:
@@ -42,6 +45,36 @@ async def handle_username_change(payload: str) -> None:
 
     username = await app.usecases.usernames.update_username(user_id)
     logger.info(f"Updated user ID {user_id}'s username to {username}")
+
+@register_pubsub("ussr:wipe_user")
+async def remove_from_leaderboards(payload: str) -> None:
+    data: RemoveFromLeaderboard = orjson.loads(payload)
+    user_id = int(data["userID"])
+
+    base_query = ["SELECT beatmap_md5 FROM scores WHERE completed >= 2 AND userid = :user_id"]
+    args = {"user_id": user_id}
+
+    if data["isRelax"] != 2:
+        base_query.append("AND is_relax = :is_relax")
+        args["is_relax"] = data["isRelax"]
+
+    user_scores = await app.state.services.database.fetch_all(
+        " ".join(base_query),
+        args
+    )
+
+    for map in user_scores:
+        beatmap = app.usecases.beatmap.md5_from_cache(map["beatmap_md5"])
+        
+        if not beatmap or not beatmap.leaderboards:
+            continue
+
+        beatmap.leaderboards = {} # reset leaderboards
+
+        app.usecases.beatmap.MD5_CACHE[beatmap.md5] = beatmap
+        app.usecases.beatmap.ID_CACHE[beatmap.id] = beatmap
+
+    logger.info(f"Removed user ID {user_id} from cached leaderboards!")
 
 
 @register_pubsub("ussr:refresh_bmap")
