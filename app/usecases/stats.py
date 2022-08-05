@@ -18,6 +18,12 @@ class StatsInfo(NamedTuple):
 
 STATS: dict[StatsInfo, Stats] = {}
 
+def remove_user(user_id: int) -> None:
+    for user_stats in STATS:
+        if user_stats[0] != user_id:
+            continue
+
+        del STATS[user_stats]
 
 async def fetch(user_id: int, mode: Mode) -> Optional[Stats]:
     stats_info = StatsInfo(
