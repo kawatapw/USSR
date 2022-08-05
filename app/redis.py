@@ -48,39 +48,42 @@ async def handle_username_change(payload: str) -> None:
 
 @register_pubsub("ussr:wipe_user")
 async def remove_from_leaderboards(payload: str) -> None:
-    data: RemoveFromLeaderboard = orjson.loads(payload)
-    user_id = int(data["userID"])
+    try:
+        data: RemoveFromLeaderboard = orjson.loads(payload)
+        user_id = int(data["userID"])
 
-    base_query = ["SELECT beatmap_md5 FROM scores WHERE completed >= 2 AND userid = :user_id"]
-    args = {"user_id": user_id}
+        base_query = ["SELECT beatmap_md5 FROM scores WHERE completed >= 2 AND userid = :user_id"]
+        args = {"user_id": user_id}
 
-    if data["isRelax"] != 2:
-        base_query.append("AND is_relax = :is_relax")
-        args["is_relax"] = data["isRelax"]
+        if data["isRelax"] != 2:
+            base_query.append("AND is_relax = :is_relax")
+            args["is_relax"] = data["isRelax"]
 
-    user_scores = await app.state.services.database.fetch_all(
-        " ".join(base_query),
-        args
-    )
+        user_scores = await app.state.services.database.fetch_all(
+            " ".join(base_query),
+            args
+        )
 
-    for user_stats in app.usecases.stats.STATS:
-        if user_stats["user_id"] != user_id:
-            continue
+        for user_stats in app.usecases.stats.STATS:
+            if user_stats["user_id"] != user_id:
+                continue
 
-        del app.usecases.stats.STATS[user_stats]
+            del app.usecases.stats.STATS[user_stats]
 
-    for map in user_scores:
-        beatmap = app.usecases.beatmap.md5_from_cache(map["beatmap_md5"])
-        
-        if not beatmap or not beatmap.leaderboards:
-            continue
+        for map in user_scores:
+            beatmap = app.usecases.beatmap.md5_from_cache(map["beatmap_md5"])
+            
+            if not beatmap or not beatmap.leaderboards:
+                continue
 
-        beatmap.leaderboards = {} # reset leaderboards
+            beatmap.leaderboards = {} # reset leaderboards
 
-        app.usecases.beatmap.MD5_CACHE[beatmap.md5] = beatmap
-        app.usecases.beatmap.ID_CACHE[beatmap.id] = beatmap
+            app.usecases.beatmap.MD5_CACHE[beatmap.md5] = beatmap
+            app.usecases.beatmap.ID_CACHE[beatmap.id] = beatmap
 
-    logger.info(f"Removed user ID {user_id} from cached leaderboards!")
+        logger.info(f"Removed user ID {user_id} from cached leaderboards!")
+    except Exception as exc:
+        logger.error(exc)
 
 
 @register_pubsub("ussr:refresh_bmap")
