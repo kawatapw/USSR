@@ -10,6 +10,7 @@ from logger import info
 
 @dataclass
 class Config:
+    host: str = "127.0.0.1"
     port: int = 2137
     sql_host: str = "localhost"
     sql_user: str = "root"
